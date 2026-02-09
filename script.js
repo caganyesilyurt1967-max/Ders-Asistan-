@@ -19,7 +19,7 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
                 text += content.items.map(s => s.str).join(" ");
             }
             extractedText = text;
-        } else if (file.type.includes("word")) {
+        } else if (file.name.endsWith('.docx')) {
             const arrayBuffer = await file.arrayBuffer();
             const result = await mammoth.extractRawText({ arrayBuffer });
             extractedText = result.value;
@@ -27,7 +27,9 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
             extractedText = await file.text();
         }
         document.getElementById('actionButtons').classList.remove('hidden');
-    } catch (err) { alert("Dosya okunamadı!"); }
+    } catch (err) {
+        alert("Dosya okunamadı: " + err.message);
+    }
     document.getElementById('loading').classList.add('hidden');
 });
 
@@ -39,16 +41,27 @@ async function handleAI(mod) {
     resultDiv.classList.add('hidden');
     loading.classList.remove('hidden');
 
-    let prompt = mod === 'ozet' ? "Özetle" : (mod === 'dy' ? "5 D/Y sorusu yaz" : "3 test sorusu yaz");
+    let prompt = "";
+    if (mod === 'ozet') prompt = "Bu ders notunu maddeler halinde çok detaylı özetle:";
+    if (mod === 'dy') prompt = "Bu notla ilgili 5 tane Doğru/Yanlış sorusu yaz ve en alta cevapları ekle:";
+    if (mod === 'test') prompt = "Bu notla ilgili 3 tane 4 şıklı çoktan seçmeli test sorusu hazırla:";
 
     try {
         const res = await fetch('/api/generate', {
             method: 'POST',
-            body: JSON.stringify({ prompt, content: extractedText.substring(0, 5000) })
+            body: JSON.stringify({ prompt, content: extractedText.substring(0, 8000) })
         });
         const data = await res.json();
-        aiContent.innerText = data.candidates[0].content.parts[0].text;
+        
+        if (data.candidates) {
+            aiContent.innerText = data.candidates[0].content.parts[0].text;
+        } else {
+            aiContent.innerText = "Yapay zeka şu an meşgul, lütfen tekrar dene.";
+        }
         resultDiv.classList.remove('hidden');
-    } catch (err) { aiContent.innerText = "Hata oluştu!"; resultDiv.classList.remove('hidden'); }
+    } catch (err) {
+        aiContent.innerText = "Hata: Sunucuya bağlanılamadı. API Key veya Vercel ayarlarını kontrol et.";
+        resultDiv.classList.remove('hidden');
+    }
     loading.classList.add('hidden');
 }
