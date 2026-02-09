@@ -1,1 +1,43 @@
-<h1>Çağan AL - Yapay Zeka Yakında Burada!</h1>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çağan AL - AI Ders Asistanı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f172a; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-border:hover { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+    </style>
+</head>
+<body class="text-slate-200">
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
+        <div class="text-2xl font-extrabold tracking-tighter text-white"><span class="text-blue-500">AI</span> DERS ASİSTANI</div>
+        <div class="bg-blue-600/20 border border-blue-500/50 px-4 py-1.5 rounded-full text-sm font-bold text-blue-400">Çağan AL</div>
+    </nav>
+    <main class="max-w-4xl mx-auto mt-10 px-4 pb-20">
+        <div class="glass rounded-3xl p-10 text-center mb-8 neon-border transition-all duration-300">
+            <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.txt">
+            <label for="fileInput" class="cursor-pointer group">
+                <div class="w-20 h-20 bg-blue-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform text-4xl">📄</div>
+                <h3 id="fileName" class="text-xl font-semibold text-white">Dosyanızı Buraya Yükleyin</h3>
+                <p class="text-slate-500 mt-2">PDF, Word veya Metin</p>
+            </label>
+        </div>
+        <div id="actionButtons" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 text-white">
+            <button onclick="handleAI('ozet')" class="bg-blue-600 p-4 rounded-2xl font-bold hover:scale-105 transition-all">📝 Özet Çıkar</button>
+            <button onclick="handleAI('dy')" class="bg-slate-800 p-4 rounded-2xl font-bold hover:bg-slate-700 border border-slate-700">✅ D/Y Soruları</button>
+            <button onclick="handleAI('test')" class="bg-slate-800 p-4 rounded-2xl font-bold hover:bg-slate-700 border border-slate-700">🎯 Mini Test</button>
+        </div>
+        <div id="loading" class="hidden text-center py-10"><div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div></div>
+        <div id="resultDisplay" class="hidden glass rounded-3xl p-8 shadow-2xl border-l-4 border-blue-500">
+            <div id="aiContent" class="text-slate-300 leading-relaxed text-lg whitespace-pre-wrap"></div>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
