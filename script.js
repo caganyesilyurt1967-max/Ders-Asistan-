@@ -1,94 +1,85 @@
-// PDF.js worker yolunu düzeltilmiş ve tam haliyle tanımlıyoruz
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+// PDF okuyucu worker ayarı (Hatasız tam link)
+const pdfWorkerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 let extractedText = "";
 
-// Dosya seçildiğinde çalışan ana fonksiyon
+// Dosya seçme işlemi
 document.getElementById('fileInput').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
-    // Arayüzü güncelle
+
     document.getElementById('fileName').innerText = file.name;
     document.getElementById('loading').classList.remove('hidden');
     document.getElementById('actionButtons').classList.add('hidden');
-    document.getElementById('resultDisplay').classList.add('hidden');
 
     try {
         if (file.type === "application/pdf") {
-            // PDF okuma işlemi
             const arrayBuffer = await file.arrayBuffer();
-            const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
-            const pdf = await loadingTask.promise;
-            let text = "";
-            
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = "";
+
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                text += content.items.map(s => s.str).join(" ") + " ";
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(" ");
+                fullText += pageText + "\n";
             }
-            
-            // Eğer PDF sadece resimden oluşuyorsa yazı çıkmaz, kontrol edelim
-            if (text.trim().length < 10) {
-                throw new Error("Bu PDF'den metin çıkarılamadı. Dosya taranmış bir resim olabilir.");
+
+            if (fullText.trim().length < 5) {
+                throw new Error("Bu PDF sadece resimlerden oluşuyor olabilir. Lütfen metin içeren bir PDF veya .txt dosyası deneyin.");
             }
-            extractedText = text;
-        } else if (file.name.endsWith('.docx')) {
-            // Word dosyası okuma
-            const arrayBuffer = await file.arrayBuffer();
-            const result = await mammoth.extractRawText({ arrayBuffer });
-            extractedText = result.value;
+            extractedText = fullText;
         } else {
-            // Normal metin dosyası okuma
+            // .txt veya diğer düz metin dosyaları
             extractedText = await file.text();
         }
-        
-        // Okuma başarılıysa butonları göster
-        document.getElementById('actionButtons').classList.remove('hidden');
-        console.log("Dosya başarıyla okundu.");
+
+        if (extractedText.length > 0) {
+            document.getElementById('actionButtons').classList.remove('hidden');
+            console.log("Dosya başarıyla yüklendi.");
+        }
     } catch (err) {
-        alert("Dosya Okuma Hatası: " + err.message);
-        console.error(err);
+        alert("HATA: " + err.message);
+        console.error("Detaylı Hata:", err);
     } finally {
         document.getElementById('loading').classList.add('hidden');
     }
 });
 
-// Yapay Zeka (Gemini) API çağırma fonksiyonu
 async function handleAI(mod) {
-    const resultDiv = document.getElementById('resultDisplay');
     const aiContent = document.getElementById('aiContent');
+    const resultDisplay = document.getElementById('resultDisplay');
     const loading = document.getElementById('loading');
 
-    resultDiv.classList.add('hidden');
+    resultDisplay.classList.add('hidden');
     loading.classList.remove('hidden');
 
-    let prompt = "";
-    if (mod === 'ozet') prompt = "Aşağıdaki ders notunu detaylıca özetle:";
-    if (mod === 'dy') prompt = "Aşağıdaki notla ilgili 5 tane Doğru/Yanlış sorusu ve cevaplarını hazırla:";
-    if (mod === 'test') prompt = "Aşağıdaki notla ilgili 3 tane çoktan seçmeli test sorusu ve cevaplarını hazırla:";
+    let promptText = "";
+    if (mod === 'ozet') promptText = "Bu ders notunu maddeler halinde özetle:";
+    if (mod === 'dy') promptText = "Bu ders notuna göre 5 adet Doğru/Yanlış sorusu ve cevaplarını hazırla:";
+    if (mod === 'test') promptText = "Bu ders notuna göre 3 adet çoktan seçmeli test sorusu ve cevaplarını hazırla:";
 
     try {
-        const res = await fetch('/api/generate', {
+        const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, content: extractedText.substring(0, 8000) })
+            body: JSON.stringify({
+                prompt: promptText,
+                content: extractedText.substring(0, 7000) // Karakter sınırı
+            })
         });
-        
-        const data = await res.json();
-        
+
+        const data = await response.json();
+
         if (data.candidates && data.candidates[0].content) {
             aiContent.innerText = data.candidates[0].content.parts[0].text;
-        } else if (data.error) {
-            aiContent.innerText = "Yapay Zeka Hatası: " + data.error;
+            resultDisplay.classList.remove('hidden');
         } else {
-            aiContent.innerText = "Yapay zekadan boş yanıt geldi.";
+            throw new Error("Yapay zeka yanıt veremedi.");
         }
-        
-        resultDiv.classList.remove('hidden');
     } catch (err) {
-        aiContent.innerText = "Bağlantı Hatası: " + err.message;
-        resultDiv.classList.remove('hidden');
+        alert("İşlem Hatası: " + err.message);
     } finally {
         loading.classList.add('hidden');
     }
