@@ -23,16 +23,18 @@ async function handleAI(mod) {
 
         const data = await response.json();
 
-        // Yanıtı yazdırma kısmını güçlendirdik Aynen baba
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
+        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
             aiContent.innerText = data.candidates[0].content.parts[0].text;
             resultDisplay.classList.remove('hidden');
         } else {
-            aiContent.innerText = "Hata Detayı: " + (data.error || "Beklenmedik yanıt formatı.");
+            // Hatanın ne olduğunu ekrana yazdırıyoruz
+            const detail = data.error || "Google yanıtı engelledi veya boş gönderdi.";
+            aiContent.innerText = "İşlem Başarısız: " + detail;
             resultDisplay.classList.remove('hidden');
         }
     } catch (err) {
-        alert("Bağlantı Hatası: " + err.message);
+        aiContent.innerText = "Bağlantı Hatası: " + err.message;
+        resultDisplay.classList.remove('hidden');
     } finally {
         loading.classList.add('hidden');
     }
