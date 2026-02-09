@@ -23,7 +23,7 @@ async function handleAI(mod) {
 
         const data = await response.json();
 
-        // Yanıtı yazdırma kısmını güçlendirdik
+        // Yanıtı yazdırma kısmını güçlendirdik Aynen baba
         if (data.candidates && data.candidates[0].content.parts[0].text) {
             aiContent.innerText = data.candidates[0].content.parts[0].text;
             resultDisplay.classList.remove('hidden');
