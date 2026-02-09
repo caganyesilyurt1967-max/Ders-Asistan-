@@ -1,12 +1,11 @@
 export default async function handler(req, res) {
-    // Sadece POST isteklerini kabul et
     if (req.method !== 'POST') return res.status(405).json({ error: 'Yöntem İzin Verilmedi' });
     
     try {
-        const { prompt, content } = req.body;
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        const { prompt, content } = body;
         const apiKey = process.env.GEMINI_API_KEY;
 
-        // EĞER ANAHTAR YOKSA HATAYI BURADA YAKALA
         if (!apiKey) {
             return res.status(500).json({ error: 'Vercel Ayarlarında GEMINI_API_KEY bulunamadı!' });
         }
